@@ -1,0 +1,22 @@
+Unity can use Bit Shifting to default layers.
+
+
+for example
+
+
+Layers :
+
+    0: UI
+    1: Player
+    2: Enemy
+
+
+LayerMask 
+    -> PlayerMask == ~(1 << 0 | 1 << 2)         ||          1 << n
+                     ~() ignore all or'd            selects the 'n' bit
+
+
+
+-> 
+|  \
+V   x

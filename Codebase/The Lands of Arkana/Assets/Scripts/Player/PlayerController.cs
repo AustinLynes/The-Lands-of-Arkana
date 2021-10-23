@@ -9,10 +9,15 @@ namespace Lands_of_Arkana
         [HideInInspector] public InputManager InputHandler;
         [HideInInspector] public AnimationController AnimationControl;
         [HideInInspector] public Locomotion LocomotionControl;
+        [HideInInspector] public PlayerInventory Inventory;
 
-        [HideInInspector] public bool IsInteracting;
-        [HideInInspector] public bool IsInAir;
-        [HideInInspector] public bool IsGrounded;
+        [HideInInspector] public bool PerformingAction;
+        [HideInInspector] public bool CanCombo;
+
+        public bool IsRotationAllowed { get => m_canRotate; }
+
+        public void AllowRotation() { m_canRotate = true; }
+        public void StopRotation() { m_canRotate = false; }
 
 
         public void Init()
@@ -25,15 +30,24 @@ namespace Lands_of_Arkana
             AnimationControl = GetComponentInChildren<AnimationController>();
             AnimationControl.Init();
 
+            Inventory = GetComponent<PlayerInventory>();
+            Inventory.Init();
+
+
+            InputHandler.Init();
+            
+            AllowRotation();
+
         }
 
         public void Tick(float deltaTime)
         {
+            PerformingAction = AnimationControl.GetAnimator().GetBool("isInteracting");
+            CanCombo = AnimationControl.GetAnimator().GetBool("canCombo");
 
             LocomotionControl.Tick(deltaTime);
-
-            IsInteracting = AnimationControl.GetAnimator().GetBool("isInteracting");
-
+            Inventory.Tick(deltaTime);
+           
         }
 
         public void FixedTick(float fixedDeltaTime)
@@ -45,18 +59,17 @@ namespace Lands_of_Arkana
         {
             LocomotionControl.LateTick();
 
-
-
             InputHandler.RollFlag = false;
             InputHandler.SprintFlag = false;
+            InputHandler.JumpFlag = false;
 
-            if (IsInAir)
-            {
-                LocomotionControl.InAirTimer = LocomotionControl.InAirTimer + Time.deltaTime;
+            InputHandler.LightAttackFlag = false;
+            InputHandler.HeavyAttackFlag = false;
+            
 
-            }
+            
         }
 
-
+        bool m_canRotate = true;
     }
 }

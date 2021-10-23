@@ -31,7 +31,15 @@ namespace Lands_of_Arkana
 
         public void Tick(float deltaTime)
         {
-            
+            Vector3 position = Vector3.zero;
+            position.y = m_properties.Offset.y;
+            m_pivot.localPosition = position;
+
+            position = Vector3.zero;
+            position.x = m_properties.Offset.x;
+            position.z = m_properties.Offset.z;
+            m_camera.localPosition = position;
+
         }
 
         public void FixedTick(float fixedDeltaTime)
@@ -42,7 +50,9 @@ namespace Lands_of_Arkana
             }
 
 
+
             HandleRotation(fixedDeltaTime, GameManager.Instance.InputHandler.MouseX, GameManager.Instance.InputHandler.MouseY);
+            HandleCollisions(fixedDeltaTime);
         }
 
 
@@ -50,8 +60,6 @@ namespace Lands_of_Arkana
         {
             Vector3 targetPosition = Vector3.SmoothDamp(m_transform.position, Target.position, ref SmoothFollowVelocity, deltaTime / m_properties.FollowSpeed);
             m_transform.position = targetPosition;
-
-            HandleCollisions(deltaTime);
 
         }
 
@@ -76,6 +84,11 @@ namespace Lands_of_Arkana
             m_pivot.localRotation = targetRotation;
 
         }
+
+       /* |
+          |--****C
+          |
+       */
 
         void HandleCollisions(float delta)
         {

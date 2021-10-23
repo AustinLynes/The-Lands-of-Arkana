@@ -19,11 +19,11 @@ namespace Lands_of_Arkana
             m_horizontal = Animator.StringToHash("Horizontal");
         }
 
-        public void PlayTargetAnimation(string animationID, bool isInteracting)
+        public void PlayTargetAnimation(string animationID, bool isInteracting, float blendTime = 0.2f)
         {
             m_animatorController.applyRootMotion = isInteracting;
             m_animatorController.SetBool("isInteracting", isInteracting);
-            m_animatorController.CrossFade(animationID, 0.2f);
+            m_animatorController.CrossFade(animationID, blendTime);
             
         }
 
@@ -93,39 +93,76 @@ namespace Lands_of_Arkana
 
         }
 
-        public Animator GetAnimator() { return m_animatorController; }
-        public bool IsRotationAllowed { get => m_canRotate; }
+        public void EnableCombo()
+        {
+            m_animatorController.SetBool("canCombo", true);
+        }
+        public void DisableCombo()
+        {
+            m_animatorController.SetBool("canCombo", false);
+        }
 
-        public void AllowRotation() { m_canRotate = true; }
-        public void StopRotate() { m_canRotate = false; }
+        public void AddSwordToHand()
+        {
+            Control.Inventory.WeaponsManager.LoadWeapon(
+                Control.Inventory.WeaponsManager.BackHolder_Sword.CurrentWeapon,
+                EquipSlot.Right_Hand
+                );
+        }
+
+        public void AddSwordToSheath()
+        {
+            Control.Inventory.WeaponsManager.LoadWeapon(
+                Control.Inventory.WeaponsManager.RightHandHolder.CurrentWeapon,
+                EquipSlot.Back_Sword
+                );
+        }
+
+        public void PlayerCanSheath()
+        {
+            Control.Inventory.WeaponsManager.CanSheathWeapon = true;
+        }
+
+        public Animator GetAnimator() { return m_animatorController; }
+
 
         int m_vertical;
         int m_horizontal;
 
-        [SerializeField]bool m_canRotate;
+
 
 
         Animator m_animatorController;
 
-        private void OnAnimatorMove() // this is not being called...
+        private void OnAnimatorMove()
         {
-            if (Control.IsInteracting == false)
+            if (Control.PerformingAction == false)
                 return;
 
+            UpdatePhysicsBodyVelocity();
+
+        }
+
+        void UpdatePhysicsBodyVelocity()
+        {
             float delta = Time.deltaTime;
-            locomotion.GetRigidbody().drag = 0;
+            locomotion.PhysicsBody.drag = 0;
 
             Vector3 deltaPosition = m_animatorController.deltaPosition;
             deltaPosition.y = 0;
-            Vector3 velocity = deltaPosition / delta;
-            locomotion.GetRigidbody().velocity = velocity;
 
+            Vector3 velocity = deltaPosition / delta;
+
+            locomotion.PhysicsBody.velocity = velocity;
         }
+
         InputManager inputManager;
         Locomotion locomotion;
 
 
         PlayerController Control;
+        public float JumpTransitionHeight = 2.0f;
+        public float JumpTransitionLerpScalar = 0.1f;
     }
 
 

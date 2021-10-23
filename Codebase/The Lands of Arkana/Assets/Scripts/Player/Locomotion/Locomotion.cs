@@ -1,28 +1,25 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Lands_of_Arkana
 {
+
+
     [RequireComponent(typeof(Rigidbody))]
     public class Locomotion : MonoBehaviour
     {
-        public bool IsSprinting;
-        [Header("Ground and Air Detection")]
-        public float groundDetectionRayStart = 0.5f;
-        public float LandCheckDistance = 1.0f;
-        public float groundDetectionRayDistance = 0.2f;
-        LayerMask ignoreForGroundCheck;
-        public float InAirTimer;
+        [HideInInspector] public bool IsSprinting;
+        [HideInInspector] public float InAirTimer;
+        [HideInInspector] public Vector3 MoveDirection;
+        [HideInInspector] public bool Jumped;
+        [HideInInspector] public Vector3 LastMoveDir;
 
-        public Rigidbody GetRigidbody()
-        {
-            return rigidbody;
-        }
+        public Rigidbody PhysicsBody { get => rigidbody; }
 
         public void Init()
         {
-            rigidbody = GetComponent<Rigidbody>();
             InitilizeRigidbody();
 
             inputManager = GameManager.Instance.InputHandler;
@@ -32,25 +29,32 @@ namespace Lands_of_Arkana
 
             m_transform = transform;
             Control = GetComponent<PlayerController>();
-            Control.IsGrounded = true;
-            ignoreForGroundCheck = ~(1 << 8 | 1 << 11);
+
+            CombatHandler = GetComponent<CombatManager>();
+            CombatHandler.Init();
+
+
+
+            IsGrounded = true;
+
         }
 
         public void Tick(float deltaTime)
         {
-            IsSprinting = inputManager.Input_SOUTH;
-
-            HandleMovement();
-            HandleRoll(deltaTime);
-
-            HandleFalling(deltaTime, MoveDirection);
-
-            if (m_animController.IsRotationAllowed)
-            {
+            m_animController.GetAnimator().SetBool("isInAir", IsInAir);
+            IdleTimer = m_animController.GetAnimator().GetFloat("Idle");
+            
+            HandleIdle();
+            HandleIsGrounded(deltaTime);
+            
+            HandleMovement(deltaTime);
+            HandleCombat(deltaTime);
+            HandleEvade(deltaTime);
+            
+            if (Control.IsRotationAllowed)
                 HandleRotation(deltaTime);
-            }
 
-            m_animController.UpdateAnimationValues(inputManager.MoveAmount, 0, IsSprinting, deltaTime);
+            m_animController.UpdateAnimationValues(inputManager.MoveMagnitude, 0, IsSprinting, deltaTime);
         }
 
         public void FixedTick(float fixedDeltaTime)
@@ -62,42 +66,58 @@ namespace Lands_of_Arkana
         {
 
         }
-
-
-        void HandleMovement()
+      
+        
+        #region Locomotion Handlers
+        void HandleIdle()
         {
-            if (GetComponent<PlayerController>().IsInteracting)
-                return;
-
-
-            MoveDirection = CalculateMoveDirection();
-            MoveDirection.Normalize();
-            MoveDirection.y = 0;
-
-            float speed = m_properties.RunSpeed;
-
-            if (inputManager.SprintFlag)
+            if (inputManager.MoveMagnitude < 0.1f)
             {
-                speed = m_properties.SprintSpeed;
-                IsSprinting = true;
-                MoveDirection *= speed;
+                IdleTimer += Time.deltaTime;
             }
             else
             {
-
-                MoveDirection *= speed;
+                IdleTimer = 0;
             }
 
+            m_animController.GetAnimator().SetFloat("Idle", IdleTimer);
+        }
+        
+        void HandleMovement(float deltaTime)
+        {
+            if (Control.PerformingAction)
+                return;
+
+            if (IsGrounded)
+                MoveDirection = CalculateMoveDirection();
+            else
+                MoveDirection = LastMoveDir;
+
+            MoveDirection.Normalize();
+            MoveDirection.y = LastMoveDir.y;
+            LastMoveDir = MoveDirection;
+
+
+            float speed = CalculateMoveSpeed();
+            MoveDirection = new Vector3(
+                MoveDirection.x * speed,
+                MoveDirection.y * Mathf.Clamp(speed, m_properties.WalSpeed, m_properties.RunSpeed),
+                MoveDirection.z * speed
+                );
+
+
+            HandleJump(deltaTime);
 
             Vector3 velocity = Vector3.ProjectOnPlane(MoveDirection, normVector);
             rigidbody.velocity = velocity;
-        }
 
+        }
 
         void HandleRotation(float deltaTime)
         {
+
             Vector3 targetDir = Vector3.zero;
-            float moveOverride = inputManager.MoveAmount;
+            float moveOverride = inputManager.MoveMagnitude;
 
             targetDir = CalculateMoveDirection();
             targetDir.Normalize();
@@ -110,14 +130,15 @@ namespace Lands_of_Arkana
             float rs = m_properties.RotationSpeed;
             Quaternion tr = Quaternion.LookRotation(targetDir);
             Quaternion targetRotation = Quaternion.Slerp(m_transform.rotation, tr, rs * deltaTime);
+
             m_transform.rotation = targetRotation;
 
 
         }
 
-        void HandleRoll(float deltaTime)
+        void HandleEvade(float deltaTime)
         {
-            if (m_animController.GetAnimator().GetBool("isInteracting"))
+            if (Control.PerformingAction)
                 return;
 
             if (inputManager.RollFlag)
@@ -125,117 +146,148 @@ namespace Lands_of_Arkana
                 MoveDirection = CalculateMoveDirection();
                 MoveDirection.Normalize();
 
-                if (inputManager.MoveAmount > 0)
+                if (inputManager.MoveMagnitude > 0)
                 {
-                    m_animController.PlayTargetAnimation("Roll_Forward", true);
-                    MoveDirection.y = 0;
+                    m_animController.PlayTargetAnimation("Roll_Forward", true, 0.05f);
+                    //MoveDirection.y = 0;
                     Quaternion rollRotation = Quaternion.LookRotation(MoveDirection);
                     m_transform.rotation = rollRotation;
                 }
                 else
                 {
-                    m_animController.PlayTargetAnimation("Back_Step", true);
+                    m_animController.PlayTargetAnimation("Back_Step", true, 0.05f);
                 }
 
             }
         }
 
-        public void HandleFalling(float delta, Vector3 moveDirection)
+        void HandleCombat(float deltaTime)
         {
-            Control.IsGrounded = false;
-            RaycastHit hit;
-            Vector3 origin = m_transform.position;
-            origin.y += 0.5f;
-
-            // is something in front of me? 
-            if (Physics.Raycast(origin, m_transform.forward, out hit, 0.4f))
+            if (Control.PerformingAction)
+                return;
+            if (Control.Inventory.WeaponsEquipped)
             {
-                moveDirection = Vector3.zero;
-            }
 
-            if (Control.IsInAir)
-            {
-                rigidbody.AddForce(-Vector3.up * m_properties.FallSpeed);
-                rigidbody.AddForce(moveDirection * m_properties.FallSpeed / 10.0f);
-
-            }
-
-            Vector3 dir = moveDirection;
-            dir.Normalize();
-
-            origin = origin + dir * groundDetectionRayDistance;
-            
-            targetPosition = m_transform.position;
-
-            Debug.DrawRay(origin, -Vector3.up * LandCheckDistance, Color.red);
-
-            if (Physics.Raycast(origin, -Vector3.up, out hit, LandCheckDistance))
-            {
-                normVector = hit.normal;
-                Vector3 tp = hit.point;
-
-                Control.IsGrounded = true;
-                targetPosition.y = tp.y;
-                if (Control.IsInAir)
+                if (inputManager.LightAttackFlag)
                 {
-                    if (InAirTimer > 0.5f && InAirTimer < 1.0f)
-                    {
-                        m_animController.PlayTargetAnimation("Land", true);
-                        InAirTimer = 0;
+                    CombatHandler.HandleLightAttack(
+                        Control.Inventory.DEBUG_sword
+                        //inputManager.LeftHandAttack
+                        );
 
-                    }
-                    else if (InAirTimer >= 1.0f)
-                    {
-                        m_animController.PlayTargetAnimation("Land_Hard", true);
-                        InAirTimer = 0;
+                    //inputManager.LeftHandAttack = false;
+                    inputManager.AttackFlag = false;
 
-                    }
-                    else
-                    {
-                        m_animController.PlayTargetAnimation("Locomotion", false);
-                        InAirTimer = 0;
-                    }
-
-                    Control.IsInAir = false;
                 }
+                else if (inputManager.HeavyAttackFlag)
+                {
+                    CombatHandler.HandleHeavyAttack(
+                       Control.Inventory.DEBUG_sword
+                       );
+
+                    inputManager.AttackFlag = false;
+
+                }
+            }
+
+        }
+
+        void HandleJump(float deltaTime)
+        {
+            if (Control.PerformingAction)
+                return;
+
+            if (inputManager.JumpFlag && IsGrounded)
+            {
+                IsGrounded = false;
+                //rigidbody.AddForce(Vector3.up * m_properties.JumpForce, m_properties.JumpForceMode);
+                LastMoveDir = new Vector3(LastMoveDir.x, m_properties.JumpForce, LastMoveDir.z);
+                Jumped = true;
+                Control.StopRotation();
+            }
+        }
+
+        void HandleIsGrounded(float deltaTime)
+        {
+            Vector3 origin = transform.position;
+            origin += transform.forward * m_properties.GroundCheckOffset.z;
+            origin.y += m_properties.GroundCheckOffset.y;
+
+
+            RaycastHit hit;
+            Vector3 targetPosition = transform.position;
+            // Handle Grounding
+            // Are we currently on the ground?
+            if (Physics.Raycast(origin, -Vector3.up, out hit, m_properties.LandCheckDistance, m_properties.GroundMask))
+            {
+                InAirTimer = 0;
+                IsGrounded = true;
+                IsInAir = false;
+
+                targetPosition = hit.point;
+                transform.position = targetPosition;
+                Control.AllowRotation();
+            }
+            else // no?
+            {
+
+                if (!IsGrounded)
+                {
+                    // then is grounded is false
+                    IsGrounded = false;
+                    IsInAir = true;
+                    InAirTimer = InAirTimer + deltaTime;
+
+                    float T2 = deltaTime * deltaTime;
+                    LastMoveDir += new Vector3(LastMoveDir.x, -m_properties.Gravity * m_properties.Mass * T2, LastMoveDir.z);
+                    //_lastMoveDirY -= Gravity * Mass * T2;
+
+                }
+            }
+
+
+        }
+
+        #endregion
+
+       
+        #region Helpers
+        private float CalculateMoveSpeed()
+        {
+            float moveSpeed = m_properties.RunSpeed;
+
+            // Is the Player Currently Sprinting ?
+            // Are they Currently Pressing forward more than half the stick ?
+            if (inputManager.SprintFlag && inputManager.MoveMagnitude > 0.5f)
+            {
+                moveSpeed = m_properties.SprintSpeed;
+                IsSprinting = true;
             }
             else
             {
-                if (Control.IsGrounded)
+                // The Player Is not Sprinting.
+                // The player Should Run when their MoveMagnitude is greater than half of the 
+                // stick. or when an analog button is pressed
+                if (inputManager.MoveMagnitude > 0.75f)
                 {
-                    Control.IsGrounded = false;
-                }
-
-                if(Control.IsInAir == false)
-                {
-                    if(Control.IsInteracting == false)
-                    {
-                        m_animController.PlayTargetAnimation("Falling", true);
-                        Vector3 vel = rigidbody.velocity;
-                        vel.Normalize();
-
-                        rigidbody.velocity = vel * (m_properties.FallSpeed / 2);
-                        Control.IsInAir = true;
-                    }
-                }
-            }
-
-            if (Control.IsGrounded)
-            {
-                if(Control.IsInteracting || inputManager.MoveAmount > 0)
-                {
-                    m_transform.position = Vector3.Lerp(m_transform.position, targetPosition, 10.0f * Time.deltaTime);
+                    moveSpeed = m_properties.RunSpeed;
+                    IsSprinting = false;
                 }
                 else
                 {
-                    m_transform.position = targetPosition;
+                    // the player is trying to walk
+                    moveSpeed = m_properties.WalSpeed;
+                    IsSprinting = false;
                 }
             }
+
+            return moveSpeed;
         }
-        Vector3 CalculateMoveDirection()
+
+        public Vector3 CalculateMoveDirection()
         {
             Vector3 moveDir = Vector3.zero;
-
+            
             moveDir = camera.forward * inputManager.Vertical;
             moveDir += camera.right * inputManager.Horizontal;
 
@@ -244,12 +296,26 @@ namespace Lands_of_Arkana
 
         void InitilizeRigidbody()
         {
+            rigidbody = GetComponent<Rigidbody>();
+            rigidbody.mass = m_properties.Mass;
             rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
         }
+        #endregion
+
+        #region Debug
+        private void OnDrawGizmos()
+        {
+            m_properties.OnDebugDrawGizmos(transform);
+
+        }
+        #endregion
+
+        [HideInInspector] public bool IsInAir;
+        public bool IsGrounded;
+        public float IdleTimer = 0;
 
         // Cache
         // Movement
-        public Vector3 MoveDirection;
         Vector3 normVector;
         Vector3 targetPosition;
 
@@ -263,13 +329,16 @@ namespace Lands_of_Arkana
         // Input Manager
         InputManager inputManager;
 
-
-        // Members
-        Transform m_transform;
+        PlayerController Control;
 
         [SerializeField] LocomotionProperties m_properties;
         AnimationController m_animController;
 
-        PlayerController Control;
+
+        CombatManager CombatHandler { get; set; }
+        //private float _lastMoveDirY;
+
+     
+        Transform m_transform;
     }
 }

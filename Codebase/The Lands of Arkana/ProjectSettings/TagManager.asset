@@ -8,7 +8,7 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - IGNORE_CAMERA
   - Water
   - UI
   - 
@@ -36,7 +36,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - GROUND
   m_SortingLayers:
   - name: Default
     uniqueID: 0

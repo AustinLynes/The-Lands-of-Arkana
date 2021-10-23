@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5317fe11168dade4cb640389029bf802, type: 3}
+  m_Name: ShortSword
+  m_EditorClassIdentifier: 
+  Name: Short Swrod
+  Icon: {fileID: 0}
+  ModelPrefab: {fileID: 5632720247703856767, guid: 2d43270d05244f146867580aaef16c93, type: 3}
+  RotationOffset: {x: -90, y: 0, z: 0}
+  PositionOffset: {x: 0, y: 0, z: 0}
+  OnBackPositionOffset: {x: -20.2, y: 13.3, z: 17.5}
+  OnBackRotationOffset: {x: -26, y: 5, z: -127}
+  IdleAnimationID: One Hand Idle
+  LightAttacks:
+  - {fileID: 11400000, guid: 5599b7ead4cc5394faf8d19410c45d85, type: 2}
+  - {fileID: 11400000, guid: f7ff88bc7413b1a479b8115647187145, type: 2}
+  - {fileID: 11400000, guid: ce23e33aedbf2dc4882d7f6608b3d6b5, type: 2}
+  - {fileID: 11400000, guid: e67e901ffb291b648a411d216bf4830e, type: 2}
+  HeavyAttack: {fileID: 11400000, guid: ce23e33aedbf2dc4882d7f6608b3d6b5, type: 2}
+  IsUnarmed: 0

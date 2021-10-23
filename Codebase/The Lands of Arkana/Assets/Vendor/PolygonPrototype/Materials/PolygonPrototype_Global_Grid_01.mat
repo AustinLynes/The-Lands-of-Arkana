@@ -36,11 +36,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - OverlayAmount: 0.5
+    - OverlayAmount: 0.718
     - _Falloff: 50
     - _GridScale: 1
     - _OverlayAmount: 0.5
     - __dirty: 0
     m_Colors:
-    - _BaseColor: {r: 0.8584906, g: 0.8584906, b: 0.8584906, a: 0}
+    - _BaseColor: {r: 0.3207547, g: 0.2612079, b: 0.20122819, a: 0}
   m_BuildTextureStacks: []

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c351a928aa5e147448f0912465a742a8, type: 3}
+  m_Name: PlayerLocomotion
+  m_EditorClassIdentifier: 
+  Mass: 65
+  WalSpeed: 3
+  RunSpeed: 5
+  SprintSpeed: 8
+  RotationSpeed: 10
+  Gravity: 9.81
+  JumpForce: 2
+  JumpForceMode: 2
+  GroundMask:
+    serializedVersion: 2
+    m_Bits: 2147483648
+  FallSpeed: 10
+  LeapVelocity: 3
+  GroundCheckOffset: {x: 0, y: 0.5, z: 0}
+  LandCheckDistance: 0.5

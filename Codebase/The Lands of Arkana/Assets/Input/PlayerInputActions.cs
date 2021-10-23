@@ -191,6 +191,30 @@ namespace Lands_of_Arkana
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Jump"",
+                    ""type"": ""Button"",
+                    ""id"": ""e0f5c45c-b6d6-4829-a1fd-c5e4004bf7e8"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""AttackRightHand"",
+                    ""type"": ""Button"",
+                    ""id"": ""88685aae-1418-4947-ae9c-300086bb7053"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""ToggleWeapon"",
+                    ""type"": ""Button"",
+                    ""id"": ""5616a892-e4d4-4aa3-817c-3072c61d3002"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -219,7 +243,7 @@ namespace Lands_of_Arkana
                 {
                     ""name"": """",
                     ""id"": ""c6b1bb1d-c200-4f75-b37f-14ae70595551"",
-                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""path"": ""<Gamepad>/leftStickPress"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -230,11 +254,77 @@ namespace Lands_of_Arkana
                 {
                     ""name"": """",
                     ""id"": ""ac272740-da28-4a82-a8e9-ed9e26f4c847"",
-                    ""path"": ""<Keyboard>/space"",
+                    ""path"": ""<Keyboard>/leftShift"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d6668b73-5795-4d13-8fd1-d5c455c8f34f"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AttackRightHand"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bef06c2b-5c01-472e-8579-2a8d391b38b4"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AttackRightHand"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1a09e8c9-c75c-4a85-8d03-42be1c5b4a3a"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8cb85a81-9dce-4e1a-b21c-49d7cfde651f"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8954e1a7-57ca-4733-b547-1d97b4b51fe1"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleWeapon"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""284668b0-ea73-4161-9169-e4d986f29f1f"",
+                    ""path"": ""<Keyboard>/t"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleWeapon"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -251,6 +341,9 @@ namespace Lands_of_Arkana
             m_PlayerActions = asset.FindActionMap("Player Actions", throwIfNotFound: true);
             m_PlayerActions_Roll = m_PlayerActions.FindAction("Roll", throwIfNotFound: true);
             m_PlayerActions_Sprint = m_PlayerActions.FindAction("Sprint", throwIfNotFound: true);
+            m_PlayerActions_Jump = m_PlayerActions.FindAction("Jump", throwIfNotFound: true);
+            m_PlayerActions_AttackRightHand = m_PlayerActions.FindAction("AttackRightHand", throwIfNotFound: true);
+            m_PlayerActions_ToggleWeapon = m_PlayerActions.FindAction("ToggleWeapon", throwIfNotFound: true);
         }
 
         public void Dispose()
@@ -343,12 +436,18 @@ namespace Lands_of_Arkana
         private IPlayerActionsActions m_PlayerActionsActionsCallbackInterface;
         private readonly InputAction m_PlayerActions_Roll;
         private readonly InputAction m_PlayerActions_Sprint;
+        private readonly InputAction m_PlayerActions_Jump;
+        private readonly InputAction m_PlayerActions_AttackRightHand;
+        private readonly InputAction m_PlayerActions_ToggleWeapon;
         public struct PlayerActionsActions
         {
             private @PlayerInputActions m_Wrapper;
             public PlayerActionsActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
             public InputAction @Roll => m_Wrapper.m_PlayerActions_Roll;
             public InputAction @Sprint => m_Wrapper.m_PlayerActions_Sprint;
+            public InputAction @Jump => m_Wrapper.m_PlayerActions_Jump;
+            public InputAction @AttackRightHand => m_Wrapper.m_PlayerActions_AttackRightHand;
+            public InputAction @ToggleWeapon => m_Wrapper.m_PlayerActions_ToggleWeapon;
             public InputActionMap Get() { return m_Wrapper.m_PlayerActions; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -364,6 +463,15 @@ namespace Lands_of_Arkana
                     @Sprint.started -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnSprint;
                     @Sprint.performed -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnSprint;
                     @Sprint.canceled -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnSprint;
+                    @Jump.started -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnJump;
+                    @Jump.performed -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnJump;
+                    @Jump.canceled -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnJump;
+                    @AttackRightHand.started -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnAttackRightHand;
+                    @AttackRightHand.performed -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnAttackRightHand;
+                    @AttackRightHand.canceled -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnAttackRightHand;
+                    @ToggleWeapon.started -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnToggleWeapon;
+                    @ToggleWeapon.performed -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnToggleWeapon;
+                    @ToggleWeapon.canceled -= m_Wrapper.m_PlayerActionsActionsCallbackInterface.OnToggleWeapon;
                 }
                 m_Wrapper.m_PlayerActionsActionsCallbackInterface = instance;
                 if (instance != null)
@@ -374,6 +482,15 @@ namespace Lands_of_Arkana
                     @Sprint.started += instance.OnSprint;
                     @Sprint.performed += instance.OnSprint;
                     @Sprint.canceled += instance.OnSprint;
+                    @Jump.started += instance.OnJump;
+                    @Jump.performed += instance.OnJump;
+                    @Jump.canceled += instance.OnJump;
+                    @AttackRightHand.started += instance.OnAttackRightHand;
+                    @AttackRightHand.performed += instance.OnAttackRightHand;
+                    @AttackRightHand.canceled += instance.OnAttackRightHand;
+                    @ToggleWeapon.started += instance.OnToggleWeapon;
+                    @ToggleWeapon.performed += instance.OnToggleWeapon;
+                    @ToggleWeapon.canceled += instance.OnToggleWeapon;
                 }
             }
         }
@@ -387,6 +504,9 @@ namespace Lands_of_Arkana
         {
             void OnRoll(InputAction.CallbackContext context);
             void OnSprint(InputAction.CallbackContext context);
+            void OnJump(InputAction.CallbackContext context);
+            void OnAttackRightHand(InputAction.CallbackContext context);
+            void OnToggleWeapon(InputAction.CallbackContext context);
         }
     }
 }
